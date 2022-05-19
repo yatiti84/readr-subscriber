@@ -1,17 +1,23 @@
 import os
 import re
-from uuid import uuid4
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
 
 gql_endpoint = os.environ['GQL_ENDPOINT']
+like_form_id = os.environ['LIKE_FORM_ID']
+comment_form_id = os.environ['COMMENT_FORM_ID']
+like_field_id = os.environ['LIKE_FIELD_ID']
+comment_field_id = os.environ['COMMENT_FIELD_ID']
+
 gql_transport = AIOHTTPTransport(url=gql_endpoint)
 gql_client = Client(transport=gql_transport, fetch_schema_from_transport=True)
 def create_feedback(data):
   create_result = []
-  name = str(uuid4())
+  name = data['name']
   form = data['form']
+  field = data['field']
+  result = data['userFeedback']
   ip = data['ip']
   ip_regex = re.compile(r'[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+')
   if not re.fullmatch(ip_regex, ip) :
@@ -22,10 +28,9 @@ def create_feedback(data):
   if not re.fullmatch(responseTime_regex, responseTime) :
     print("responseTime format not match.")
     return False
-  for result in data['result']:
-    field = result['field']
-    result = result['userFeedback']
-    mutation_data = '''
+  
+
+  mutation_data = '''
       data: {
         name: "%s",
         ip: "%s",
@@ -43,31 +48,44 @@ def create_feedback(data):
         }
       }
     ''' %(name, ip, result, responseTime, form, field)
-    mutation = '''
+  mutation = '''
     mutation{
       createFormResult(%s){
         id
       }
     }
     ''' % mutation_data
-    print(mutation)
-    result = gql_client.execute(gql(mutation))
+  print(mutation)
+  result = gql_client.execute(gql(mutation))
+  print(result)
+  if not isinstance(result, dict) and 'createFormResult' not in result:
     print(result)
-    if not isinstance(result, dict) and 'createFormResult' not in result:
-      print(result)
-      return False
-    if isinstance(result['createFormResult'], dict) and 'id' in result['createFormResult']:
-      create_result.append(result['createFormResult']['id'])
-    else: 
-      print(result)
-      return False
+    return False
+  if isinstance(result['createFormResult'], dict) and 'id' in result['createFormResult']:
+    create_result.append(result['createFormResult']['id'])
+  else: 
+    print(result)
+    return False
   return True
+
+  
+
+  
 if __name__ == '__main__':
-  data = {"form": "2",
+  data = {
+  "name": "uuid",
+  "form": "2",
   "ip": "2.1.1.22",
   "responseTime": '2022-05-19T05:00:00.000Z',
-  "result": [
-      {"field": "6", "userFeedback": "不符合"},
-      {"field": "7", "userFeedback": "巴拉巴拉使用者的實際經驗～～"},
-]}
+  "field": "6",
+  "userFeedback": True,
+  }
+  data_comment = {
+  "name": "uuid",
+  "form": "3",
+  "ip": "2.1.1.22",
+  "responseTime": '2022-05-19T05:00:00.000Z',
+  "field": "7", 
+  "userFeedback": "使用者的實際經驗感想",
+  }
   print(create_feedback(data))
