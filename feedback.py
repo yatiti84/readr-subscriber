@@ -1,5 +1,6 @@
 import os
 import re
+
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
@@ -14,6 +15,7 @@ comment_field_id = os.environ['COMMENT_FIELD_ID']
 
 gql_transport = AIOHTTPTransport(url=gql_endpoint)
 gql_client = Client(transport=gql_transport, fetch_schema_from_transport=True)
+
 def create_formResult(gql_client, name, ip, result, responseTime, form, field):
   mutation_data = '''
         data: {
@@ -30,6 +32,7 @@ def create_formResult(gql_client, name, ip, result, responseTime, form, field):
             connect: {
               id: "%s"
             }
+
           }
         }
       ''' %(name, ip, result, responseTime, form, field)
@@ -124,6 +127,7 @@ def feedback_handler(data):
 
 
 if __name__ == '__main__':
+
   data_comment = {
   "name": "uuid",
   "form": "3",
