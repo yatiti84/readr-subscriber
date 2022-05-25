@@ -6,11 +6,6 @@ from gql.transport.aiohttp import AIOHTTPTransport
 
 
 gql_endpoint = os.environ['GQL_ENDPOINT']
-like_form_id = os.environ['LIKE_FORM_ID']
-comment_form_id = os.environ['COMMENT_FORM_ID']
-like_field_id = os.environ['LIKE_FIELD_ID']
-comment_field_id = os.environ['COMMENT_FIELD_ID']
-
 
 
 gql_transport = AIOHTTPTransport(url=gql_endpoint)
@@ -71,13 +66,13 @@ def create_formResult(gql_client, name, ip, result, responseTime, form, field):
   else: 
     print(mutation_result)
     return False
-def delete_name_exist_result(gql_client, name):
+def delete_name_exist_result(gql_client, name, fieldId):
   query = '''query{
     formResults(where:{name:{in:"%s"} ,field:{id:{in:%s}}} orderBy:{name:desc}){
       id
     }
   }
-''' %(name, like_field_id)
+''' %(name, fieldId)
   print(query)
   query_result = gql_client.execute(gql(query))
   if isinstance(query_result, dict) and 'formResults' in query_result:
@@ -131,7 +126,7 @@ def feedback_handler(data):
     if field_type=='text':
       return create_formResult(gql_client, name, ip, result, responseTime, form, field)
     elif field_type=='single':
-      if delete_name_exist_result(gql_client, name) is False:
+      if delete_name_exist_result(gql_client, name, field) is False:
         return False
       if result == 'true' or result == 'false':
         return create_formResult(gql_client, name, ip, result, responseTime, form, field) 
